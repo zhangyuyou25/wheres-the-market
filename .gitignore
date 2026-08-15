@@ -1,0 +1,12 @@
+.dev/
+
+*.tmp
+*.log
+*_page.html
+*_umi.js
+*_shoplist.*
+
+node_modules/
+
+.DS_Store
+Thumbs.db

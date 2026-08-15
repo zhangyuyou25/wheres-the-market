@@ -1,0 +1,1965 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>外资超市分布 · Where's the Market</title>
+<meta name="description" content="中国大陆外资超市（山姆、开市客、奥乐齐）门店分布查询工具">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"PingFang SC","Microsoft YaHei",sans-serif;background:#fff;color:#333;line-height:1.6;font-size:15px}
+  .container{max-width:820px;margin:0 auto;padding:24px 20px 60px}
+  
+  /* Header */
+  .header{text-align:center;margin-bottom:32px}
+  .header h1{font-size:1.6rem;font-weight:700;letter-spacing:-0.02em;margin-bottom:6px}
+  .header p{font-size:.85rem;color:#999}
+  
+  /* Search */
+  .search-box{position:relative;margin-bottom:24px}
+  .search-box input{width:100%;padding:10px 14px 10px 36px;border:1px solid #e0e0e0;border-radius:8px;font-size:.95rem;outline:none;transition:border-color .2s}
+  .search-box input:focus{border-color:#999}
+  .search-box svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:#bbb}
+  
+  /* Filter labels */
+  .filter-section{margin-bottom:20px}
+  .filter-label{font-size:.75rem;color:#999;margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+  .tags{display:flex;flex-wrap:wrap;gap:6px}
+  .tag{display:inline-flex;align-items:center;gap:4px;padding:5px 12px;border:1px solid #e8e8e8;border-radius:20px;font-size:.8rem;color:#666;cursor:pointer;user-select:none;transition:all .15s;background:#fff}
+  .tag:hover{border-color:#ccc;background:#fafafa}
+  .tag.active{background:#333;color:#fff;border-color:#333}
+  .tag .count{font-size:.7rem;opacity:.6}
+  
+  /* Results */
+  .results-summary{font-size:.8rem;color:#999;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #f0f0f0}
+  .results-summary span{color:#333;font-weight:600}
+  
+  .city-group{margin-bottom:28px}
+  .city-group h3{font-size:1.05rem;font-weight:600;margin-bottom:10px;display:flex;align-items:baseline;gap:8px}
+  .city-group h3 .store-count{font-size:.75rem;color:#bbb;font-weight:400}
+  
+  .district-group{margin-bottom:16px;padding-left:4px}
+  .district-group h4{font-size:.85rem;color:#888;font-weight:600;margin-bottom:6px;padding-left:8px;border-left:2px solid #e8e8e8}
+  
+  .store-card{display:flex;align-items:flex-start;gap:8px;padding:6px 0 6px 16px;position:relative}
+  .store-card::before{content:'';position:absolute;left:5px;top:14px;width:4px;height:4px;border-radius:50%;background:#ccc}
+  .store-card .brand-badge{font-size:.7rem;padding:1px 6px;border-radius:4px;white-space:nowrap;font-weight:500}
+  .brand-badge.sams{background:#e8f0fe;color:#1a73e8}
+  .brand-badge.costco{background:#fce8e6;color:#d93025}
+  .brand-badge.aldi{background:#fef7e0;color:#e37400}
+  .store-card .store-info{flex:1;min-width:0}
+  .store-card .store-name{font-size:.85rem;font-weight:500;margin-bottom:1px}
+  .store-card .store-address{font-size:.8rem;color:#999;word-break:break-all}
+  .store-card .store-hours{font-size:.7rem;color:#ccc;margin-top:2px}
+  
+  /* Empty state */
+  .empty{text-align:center;padding:40px 20px;color:#ccc}
+  .empty p{font-size:.9rem}
+  
+  /* Clear button */
+  .clear-btn{font-size:.75rem;color:#999;cursor:pointer;border:none;background:none;text-decoration:underline;margin-left:8px}
+  .clear-btn:hover{color:#333}
+  
+  /* Footer */
+  .footer{text-align:center;margin-top:40px;padding-top:20px;border-top:1px solid #f0f0f0;font-size:.75rem;color:#ccc}
+  .footer a{color:#999;text-decoration:none}
+  .footer a:hover{color:#666}
+  
+  /* Brand colors for badge */
+  .brand-badge.aldi{background:#fef7e0;color:#e37400}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>外资超市分布</h1>
+    <p>山姆 · 开市客 · 奥乐齐 · 中国大陆 170 家门店</p>
+    <p style="font-size:.7rem;color:#bbb;margin-top:4px">数据最后核查：2026-08-15</p>
+  </div>
+  
+  <div class="search-box">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="searchInput" placeholder="搜索城市、区或门店名，如：静安、深圳、奥乐齐" />
+  </div>
+  
+  <div class="filter-section">
+    <div class="filter-label">品牌</div>
+    <div class="tags" id="brandTags"></div>
+  </div>
+  
+  <div class="filter-section">
+    <div class="filter-label">地区 <button class="clear-btn" id="clearBtn" style="display:none">清除全部筛选</button></div>
+    <div class="tags" id="cityTags"></div>
+  </div>
+  
+  <div class="results-summary" id="summary"></div>
+  <div id="results"></div>
+  
+  <div class="footer">
+    <p>数据来源：官网公开信息 · <a href="https://github.com/zhangyuyou25/wheres-the-market">GitHub</a></p>
+  </div>
+</div>
+
+<script>
+const STORES = [
+  {
+    "brand": "奥乐齐",
+    "name": "静安体育中心店",
+    "city": "上海",
+    "district": "静安区",
+    "address": "上海市静安区江宁路428号1楼",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "苏河湾万象天地店",
+    "city": "上海",
+    "district": "静安区",
+    "address": "上海市静安区福建北路100号苏河湾万象天地LG206",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "静安万航渡店",
+    "city": "上海",
+    "district": "静安区",
+    "address": "上海市静安区万航渡路838号柒彩里1楼",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "静安高平店",
+    "city": "上海",
+    "district": "静安区",
+    "address": "上海市静安区高平路153号1楼",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "静安大宁保利时光里店",
+    "city": "上海",
+    "district": "静安区",
+    "address": "上海市静安区灵石路527号、579号、587号地下一层，B1F-01、B1F-13",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "黄浦漫圈邻里店",
+    "city": "上海",
+    "district": "黄浦区",
+    "address": "上海市黄浦区西藏南路1699弄漫圈邻里4号楼1楼",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "黄浦凯德晶萃店",
+    "city": "上海",
+    "district": "黄浦区",
+    "address": "上海市黄浦区徐家汇路268号LuOne凯德晶萃广场B1楼20",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "徐汇龙湖华泾天街店",
+    "city": "上海",
+    "district": "徐汇区",
+    "address": "上海市徐汇区华泾路459号地下一层A-B1-Z02",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "徐汇万科广场店",
+    "city": "上海",
+    "district": "徐汇区",
+    "address": "上海市徐汇区沪闵路9191号徐汇万科广场B1楼B1-11室",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "徐汇光启城店",
+    "city": "上海",
+    "district": "徐汇区",
+    "address": "上海市徐汇区宜山路455号光启城时尚购物中心B1楼01-1、01-10商铺",
+    "hours": "08:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "徐汇龙华会店",
+    "city": "上海",
+    "district": "徐汇区",
+    "address": "上海市徐汇区龙华路2618号龙华会B2楼S09A",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "徐汇大木桥店",
+    "city": "上海",
+    "district": "徐汇区",
+    "address": "上海徐汇区大木桥路18号玖时活力中心B2008-9",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "徐汇永新坊店",
+    "city": "上海",
+    "district": "徐汇区",
+    "address": "上海市徐汇区天钥桥路131号永新坊地下一层08、09室A",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "徐汇漕宝日月光店",
+    "city": "上海",
+    "district": "徐汇区",
+    "address": "上海市徐汇区漕宝路33号日月光B2楼17-20",
+    "hours": "08:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "徐汇罗秀创邑店",
+    "city": "上海",
+    "district": "徐汇区",
+    "address": "上海市徐汇区罗秀路897号创邑MIX B1楼B01",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "徐汇沪港国际大厦店",
+    "city": "上海",
+    "district": "徐汇区",
+    "address": "上海市徐汇区斜土路2364号1楼",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "长宁天山创邑店",
+    "city": "上海",
+    "district": "长宁区",
+    "address": "上海市长宁区天山路1111号创邑MIX B1楼B49",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "长宁缤谷广场店",
+    "city": "上海",
+    "district": "长宁区",
+    "address": "上海市长宁区天山路341号缤谷广场1幢101A、201单元",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "长宁伊犁南路店",
+    "city": "上海",
+    "district": "长宁区",
+    "address": "上海市长宁区伊犁南路288弄7号地下一层101、102室",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "长宁龙之梦店",
+    "city": "上海",
+    "district": "长宁区",
+    "address": "上海市长宁区长宁路1018号长宁龙之梦商场B2楼B2029",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "长宁黄金城道店",
+    "city": "上海",
+    "district": "长宁区",
+    "address": "上海市长宁区黄金城道776号1楼1&3号",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "置业梦享家店",
+    "city": "上海",
+    "district": "闵行区",
+    "address": "上海市闵行区石屏路285号一层169室",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "闵行马桥满天星生活广场店",
+    "city": "上海",
+    "district": "闵行区",
+    "address": "上海市闵行区银春路2232号马桥满天星生活广场1层103室",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "闵行银都海梦一方店",
+    "city": "上海",
+    "district": "闵行区",
+    "address": "上海市闵行区莲花南路1389号海梦一方商场2楼L01B&02",
+    "hours": "08:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "莘庄仲盛店",
+    "city": "上海",
+    "district": "闵行区",
+    "address": "上海市闵行区都市路5001号仲盛商城2楼258A-259",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "闵行井亭天地店",
+    "city": "上海",
+    "district": "闵行区",
+    "address": "上海市闵行区虹泉路1078号井亭天地1楼-1-14",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "闵行莲花店",
+    "city": "上海",
+    "district": "闵行区",
+    "address": "上海市闵行区沪闵路7399号莲花路站商场1楼",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "闵行红松店",
+    "city": "上海",
+    "district": "闵行区",
+    "address": "上海市闵行区红松路227号",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "闵行万源坊店",
+    "city": "上海",
+    "district": "闵行区",
+    "address": "上海市闵行区万源路550号1层117、118、121室",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "闵行鑫都满天星生活广场店",
+    "city": "上海",
+    "district": "闵行区",
+    "address": "上海市闵行区鑫都路2508号2532号2536号101部位1-113室",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "虹口瑞虹新天地月亮湾店",
+    "city": "上海",
+    "district": "虹口区",
+    "address": "上海市虹口区瑞虹路188号地下一层08、09、10、11及34室",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "虹口曲阳666店",
+    "city": "上海",
+    "district": "虹口区",
+    "address": "上海市虹口区中山北二路1705号1层115号",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "凯德虹口店",
+    "city": "上海",
+    "district": "虹口区",
+    "address": "上海市虹口区西江湾路388号凯德虹口商业中心B1楼18&19",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "杨浦长白228街坊店",
+    "city": "上海",
+    "district": "杨浦区",
+    "address": "上海市杨浦区长白路158号长白228街坊1楼",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "五角场创智天地店",
+    "city": "上海",
+    "district": "杨浦区",
+    "address": "上海市杨浦区淞沪路316号创智天地B1楼16（靠近大学路）",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "杨浦控江店",
+    "city": "上海",
+    "district": "杨浦区",
+    "address": "上海市杨浦区控江路2068号旭辉Mall1楼",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "杨浦延吉店",
+    "city": "上海",
+    "district": "杨浦区",
+    "address": "上海市杨浦区延吉中路235号1楼",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "普陀天安千树店",
+    "city": "上海",
+    "district": "普陀区",
+    "address": "上海市普陀区莫干山路600号大洋晶典天安千树B1楼24A",
+    "hours": "08:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "普陀中环百联店",
+    "city": "上海",
+    "district": "普陀区",
+    "address": "上海市普陀区真光路1288号百联中环购物广场1楼A区",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "普陀长寿旭辉店",
+    "city": "上海",
+    "district": "普陀区",
+    "address": "上海市普陀区长寿路333号旭辉企业大厦B1楼B107-109",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "浦东澜庭里店",
+    "city": "上海",
+    "district": "浦东新区",
+    "address": "上海市浦东新区康梧路1075弄1-10号澜庭里3号楼201-203室，4号楼203、205室",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "浦东世博新里店",
+    "city": "上海",
+    "district": "浦东新区",
+    "address": "中国（上海）自由贸易试验区浦东南路3550号1层101、102、103、105及108室",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "浦东漫乐城店",
+    "city": "上海",
+    "district": "浦东新区",
+    "address": "上海市浦东新区齐河路258号漫乐城1楼1-65",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "浦东福山荟店",
+    "city": "上海",
+    "district": "浦东新区",
+    "address": "中国（上海）自由贸易试验区浦东大道720、728号一层东部101-a、102、103",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "浦东川沙九六广场店",
+    "city": "上海",
+    "district": "浦东新区",
+    "address": "上海市浦东新区川沙路5796号九六广场B1楼13",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "浦东中房金谊广场店",
+    "city": "上海",
+    "district": "浦东新区",
+    "address": "上海市浦东新区上南路4467号B1楼（近A门）B1045/1048/1061",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "浦东锦绣叁宸里店",
+    "city": "上海",
+    "district": "浦东新区",
+    "address": "上海市浦东新区锦绣路3218号叁宸里1楼",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "浦东长泰广场店",
+    "city": "上海",
+    "district": "浦东新区",
+    "address": "上海市浦东新区金科路2889弄长泰广场1座1楼15",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "浦东富荟广场店",
+    "city": "上海",
+    "district": "浦东新区",
+    "address": "上海市浦东新区樱花路80弄2号富荟商业广场2楼217-219",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "浦东金杨店",
+    "city": "上海",
+    "district": "浦东新区",
+    "address": "上海市浦东新区金杨路608号1楼",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "浦东大华锦绣优嘉店",
+    "city": "上海",
+    "district": "浦东新区",
+    "address": "上海市浦东新区成山路1339号1楼",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "浦东长岛店",
+    "city": "上海",
+    "district": "浦东新区",
+    "address": "上海市浦东新区长岛路1146号1楼",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "浦东世茂店",
+    "city": "上海",
+    "district": "浦东新区",
+    "address": "上海市浦东新区浦城路650号1楼",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "浦东富都广场店",
+    "city": "上海",
+    "district": "浦东新区",
+    "address": "上海市浦东新区东方路1367号1楼",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "浦东滨江万芊荟店",
+    "city": "上海",
+    "district": "浦东新区",
+    "address": "上海市浦东新区浦东大道1559号滨江万芊荟商场B1楼02-1",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "宝山昊元店",
+    "city": "上海",
+    "district": "宝山区",
+    "address": "上海市宝山区菊联路昊元生活广场",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "宝山吉浦天地店",
+    "city": "上海",
+    "district": "宝山区",
+    "address": "上海市宝山区三门路501号6幢1层112室",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "宝山万达广场店",
+    "city": "上海",
+    "district": "宝山区",
+    "address": "上海市宝山区一二八纪念路988弄2号地下一层1071室",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "宝山宝杨宝龙广场店",
+    "city": "上海",
+    "district": "宝山区",
+    "address": "上海市宝山区同济路669弄5号M1-B1-070-1",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "宝山三邻桥店",
+    "city": "上海",
+    "district": "宝山区",
+    "address": "上海市宝山区江杨南路485号三邻桥1楼",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "宝山招商花园城店",
+    "city": "上海",
+    "district": "宝山区",
+    "address": "上海市宝山区水产路2069号宝山招商花园城2楼218-227",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "宝山大华虎城店",
+    "city": "上海",
+    "district": "宝山区",
+    "address": "上海市宝山区真华路928号1楼",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "松江亚乐城店",
+    "city": "上海",
+    "district": "松江区",
+    "address": "上海市松江区新桥镇莘松路1266号亚繁亚乐城1楼103-109、110-1、111-1、112-1、116-121室",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "松江泗泾店",
+    "city": "上海",
+    "district": "松江区",
+    "address": "上海市松江区泗宝路399号金地方邻B1楼",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "松江开元地中海店",
+    "city": "上海",
+    "district": "松江区",
+    "address": "上海市松江区新松江路925弄开元地中海1楼1113-1116",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "松江涞坊店",
+    "city": "上海",
+    "district": "松江区",
+    "address": "上海市松江区涞坊路417号1楼",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "松江九亭金地广场店",
+    "city": "上海",
+    "district": "松江区",
+    "address": "上海市松江区沪亭北路99弄8号地下一层B1001-4",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "嘉定南翔中冶祥腾店",
+    "city": "上海",
+    "district": "嘉定区",
+    "address": "上海市嘉定区真南路4368弄中冶祥腾城市广场1楼08",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "嘉定宝龙广场店",
+    "city": "上海",
+    "district": "嘉定区",
+    "address": "上海市嘉定区阿克苏路1099号宝龙广场1楼1055",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "嘉定嘉亭荟店",
+    "city": "上海",
+    "district": "嘉定区",
+    "address": "上海市嘉定区安亭镇墨玉南路989号1107-2、1108室",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "嘉定悦乐坊店",
+    "city": "上海",
+    "district": "嘉定区",
+    "address": "上海市嘉定区金鼎路2218号一层L188室",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "青浦蟠龙天地店",
+    "city": "上海",
+    "district": "青浦区",
+    "address": "上海市青浦区蟠鼎路123弄8号蟠龙天地烟雨长街FL107",
+    "hours": "08:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "金山都乐汇店",
+    "city": "上海",
+    "district": "金山区",
+    "address": "上海市金山区山阳镇海汇街500号1层10101室",
+    "hours": "08:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "奉贤苏宁店",
+    "city": "上海",
+    "district": "奉贤区",
+    "address": "上海市奉贤区南奉公路7500号",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "奉贤嘉园坊店",
+    "city": "上海",
+    "district": "奉贤区",
+    "address": "上海市奉贤区嘉园路279号1号1层1-1-1",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "无锡滨湖万达店",
+    "city": "无锡",
+    "district": "滨湖区",
+    "address": "无锡市滨湖区河埒口梁溪路35号万达广场",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "无锡经开朗诗店",
+    "city": "无锡",
+    "district": "滨湖区",
+    "address": "无锡市滨湖区经开区贡湖大道与塘铁桥路交汇处东北侧金匮里56-57号",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "无锡常庆广场店",
+    "city": "无锡",
+    "district": "滨湖区",
+    "address": "江苏省无锡市滨湖区湖滨壹号花园6-101、102、201、202、301、302",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "无锡百安居店",
+    "city": "无锡",
+    "district": "新吴区",
+    "address": "江苏省无锡市新吴区长江北路259号1F-03",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "无锡梅村五洲国际广场店",
+    "city": "无锡",
+    "district": "新吴区",
+    "address": "江苏省无锡市新吴区新友北路8号梅村五洲国际广场 B1 层1301-C2",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "无锡洋溪睦邻中心店",
+    "city": "无锡",
+    "district": "惠山区",
+    "address": "江苏省无锡市惠山区香缇路3-3、3-2、3-1号1层101",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "无锡落霞睦邻中心店",
+    "city": "无锡",
+    "district": "经开区",
+    "address": "江苏省无锡市经开区瑞景道1236号一层12-16号",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "江阴八佰伴店",
+    "city": "无锡",
+    "district": "江阴市",
+    "address": "江苏省江阴市环城南路160号八佰伴B馆二楼2FL-2001-2004/2033-2035/2037B",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "无锡圆融购物中心店",
+    "city": "无锡",
+    "district": "梁溪区",
+    "address": "江苏省无锡市梁溪区锡澄路262号无锡圆融购物中心负一层B1030",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "无锡阳光城市广场店",
+    "city": "无锡",
+    "district": "梁溪区",
+    "address": "江苏省无锡市梁溪区红星路229号5-1-1-1",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "无锡茂业天地店",
+    "city": "无锡",
+    "district": "梁溪区",
+    "address": "江苏省无锡市梁溪区清扬路128号B1201A",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "无锡凯悦荟生活广场店",
+    "city": "无锡",
+    "district": "梁溪区",
+    "address": "江苏省无锡市梁溪区春申路69号一楼116",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "南京巧刻广场店",
+    "city": "南京",
+    "district": "建邺区",
+    "address": "江苏省南京市建邺区兴隆大街156号地下一层B1-01-01",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "南京江北印象汇店",
+    "city": "南京",
+    "district": "浦口区",
+    "address": "江苏省南京市浦口区大桥北路58号二层2F 31/32/33/34号",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "南京仙林金鹰湖滨天地店",
+    "city": "南京",
+    "district": "栖霞区",
+    "address": "江苏省南京市栖霞区学津路1号地下一层B080号",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "南京景枫中心店",
+    "city": "南京",
+    "district": "江宁区",
+    "address": "江苏省南京市江宁区双龙大道1698号景枫中心B161/B201",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "南京华贸中心店",
+    "city": "南京",
+    "district": "鼓楼区",
+    "address": "江苏省南京市鼓楼区中央路339号1幢地下一层EB08号",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "南京珠江路金鹰店",
+    "city": "南京",
+    "district": "玄武区",
+    "address": "江苏省南京市玄武区珠江路1号2F-02",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "镇江万达广场店",
+    "city": "镇江",
+    "district": "润州区",
+    "address": "江苏省镇江市润州区黄山西路19号镇江万达广场D08幢1F-1",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "镇江凤凰广场店",
+    "city": "镇江",
+    "district": "京口区",
+    "address": "江苏省镇江市京口区东吴路48号0101室B1-103",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "丹阳金鹰国际购物中心店",
+    "city": "镇江",
+    "district": "丹阳市",
+    "address": "江苏省镇江市丹阳市新民东路99号二层2F-01",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "扬州万象汇店",
+    "city": "扬州",
+    "district": "邗江区",
+    "address": "江苏省扬州市邗江区文昌中路606号扬州万象汇B0101N",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "扬州江都金鹰国际购物中心店",
+    "city": "扬州",
+    "district": "江都区",
+    "address": "江苏省扬州市江都区仙女镇文昌东路1177号金鹰新城市中心1号商业一楼F1017",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "苏州竹辉环宇荟店",
+    "city": "苏州",
+    "district": "姑苏区",
+    "address": "苏州市姑苏区南石皮弄同源艺术幼儿园东侧约40米",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "苏州西城永捷店",
+    "city": "苏州",
+    "district": "姑苏区",
+    "address": "江苏省苏州市姑苏区广济南路3号1F-105",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "苏州世茂广场店",
+    "city": "苏州",
+    "district": "姑苏区",
+    "address": "苏州市姑苏区宝带西路1177号6撞101室一层6-1-3-3，6-1-4-1/2/3/4",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "苏州复悦城店",
+    "city": "苏州",
+    "district": "姑苏区",
+    "address": "江苏省苏州市姑苏区虎池路1583号3幢1F-08+09+09-Q+1F-10室",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "苏州绿宝广场店",
+    "city": "苏州",
+    "district": "高新区",
+    "address": "苏州市高新区绿宝休闲购物广场1幢103室1层L1-1、L-2、L1-2A",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "张家港金茂览秀城店",
+    "city": "苏州",
+    "district": "张家港市",
+    "address": "江苏省苏州市张家港市戴巷路288号B1001",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "苏州墅浦生活荟店",
+    "city": "苏州",
+    "district": "吴中经济开发区",
+    "address": "江苏省苏州市吴中经济开发区郭巷街道墅浦路901号01层01-01/02/03号商铺",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "苏州小石城生活广场店",
+    "city": "苏州",
+    "district": "吴中经济开发区",
+    "address": "江苏省苏州市吴中经济开发区城南街道小石湖路8号114室-20",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "苏州丽丰购物中心店",
+    "city": "苏州",
+    "district": "吴中区",
+    "address": "江苏省苏州市吴中区宝带东路399号丽丰商业中心地下B101负一层B031号",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "昆山金鹰店",
+    "city": "苏州",
+    "district": "昆山市",
+    "address": "昆山市珠江中路199号昆山金鹰国际购物中心A座地下一层1136-AB1-01513",
+    "hours": "09:00-21:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "苏州景城邻里店",
+    "city": "苏州",
+    "district": "苏州工业园区",
+    "address": "江苏省苏州市苏州工业园区九华路65号1幢102室景城邻里中心地下一层B129-2铺位",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "苏州方洲邻里中心店",
+    "city": "苏州",
+    "district": "苏州工业园区",
+    "address": "江苏省苏州市苏州工业园区方洲路528号1幢109室A110号铺位",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "苏州建屋乐活城店",
+    "city": "苏州",
+    "district": "苏州工业园区",
+    "address": "江苏省苏州市苏州工业园区娄葑镇星湖街999 号99 商幢地上一层101A 号",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "常州钟楼吾悦国际广场店",
+    "city": "常州",
+    "district": "钟楼区",
+    "address": "江苏省常州市钟楼区延陵西路123号钟楼吾悦国际广场5幢001号B1层/5-B111",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "常州青枫荟店",
+    "city": "常州",
+    "district": "钟楼区",
+    "address": "江苏省常州市钟楼区茶花路178号1幢B1-01",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "常州天宇购物广场店",
+    "city": "常州",
+    "district": "新北区",
+    "address": "江苏省常州市新北区黄河西路239号天宇购物广场1幢101号2层2-2-3铺位",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "奥乐齐",
+    "name": "常州溧阳金鹰国际购物中心店",
+    "city": "常州",
+    "district": "溧阳市",
+    "address": "江苏省常州市溧阳市天目路6号地下一层B001-B008",
+    "hours": "07:00-22:00",
+    "phone": "4008201973",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "深圳龙岗店",
+    "city": "深圳",
+    "district": "龙岗区",
+    "address": "广东省深圳市龙岗区黄阁南路1号星河时代购物公园B1S-001、B2S-001、L1S-037、L2S-033",
+    "hours": "9:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "深圳龙华店",
+    "city": "深圳",
+    "district": "龙华区",
+    "address": "广东省深圳市龙华区龙华街道景龙社区东环一路与梅龙路交汇处壹成中心景园壹方天地E区梅龙路1111号负1-L4",
+    "hours": "9:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "深圳福田店",
+    "city": "深圳",
+    "district": "福田区",
+    "address": "广东省深圳市福田区侨香路与农林路交界东南的深国投商业中心一层二层与负一层",
+    "hours": "7:30-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "深圳前海店",
+    "city": "深圳",
+    "district": "南山区",
+    "address": "广东省深圳市南山区桂湾三路1号前海山姆会员商店",
+    "hours": "9:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "北京亦庄店",
+    "city": "北京",
+    "district": "大兴区",
+    "address": "北京市大兴区经济技术开发区文化园东路6号亦庄创意生活广场地上第一层",
+    "hours": "8:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "北京顺义店",
+    "city": "北京",
+    "district": "顺义区",
+    "address": "北京市顺义区后沙峪镇安平街5号院2号楼1-2层",
+    "hours": "8:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "北京石景山店",
+    "city": "北京",
+    "district": "石景山区",
+    "address": "北京市石景山区阜石路158号",
+    "hours": "8:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "北京大兴店",
+    "city": "北京",
+    "district": "大兴区",
+    "address": "北京市大兴区西红门镇欣雅街16号院2号楼",
+    "hours": "8:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "广州番禺店",
+    "city": "广州",
+    "district": "番禺区",
+    "address": "广东省广州市番禺区南村镇里仁洞村迎宾路东侧海印又一城地上第一、二层",
+    "hours": "9:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "广州东店",
+    "city": "广州",
+    "district": "天河区",
+    "address": "广东省广州市天河区黄埔大道东657、659、661号",
+    "hours": "9:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "上海浦东店",
+    "city": "上海",
+    "district": "浦东新区",
+    "address": "上海市浦东新区高科西路2110号",
+    "hours": "8:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "上海青浦店",
+    "city": "上海",
+    "district": "青浦区",
+    "address": "上海市青浦区赵巷镇业锦路483弄1-26号",
+    "hours": "8:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "上海嘉定店",
+    "city": "上海",
+    "district": "嘉定区",
+    "address": "上海市嘉定区惠亚路117号",
+    "hours": "8:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "上海真如店",
+    "city": "上海",
+    "district": "普陀区",
+    "address": "上海市普陀区真华南路335号",
+    "hours": "8:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "上海宝山店",
+    "city": "上海",
+    "district": "宝山区",
+    "address": "上海市宝山区聚丰园路165号104-204、105-205",
+    "hours": "8:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "上海外高桥店",
+    "city": "上海",
+    "district": "浦东新区",
+    "address": "上海市浦东新区万安街599号",
+    "hours": "8:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "珠海香洲店",
+    "city": "珠海",
+    "district": "香洲区",
+    "address": "广东省珠海市香洲区明珠北路338号珠海印象城购物中心地下第一层SCB2及地上第一层SCF1",
+    "hours": "9:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "福州鼓楼店",
+    "city": "福州",
+    "district": "鼓楼区",
+    "address": "福建省福州市鼓楼区杨桥西路128号",
+    "hours": "8:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "福州仓山店",
+    "city": "福州",
+    "district": "仓山区",
+    "address": "福建省福州市仓山区城门镇万仁路6号",
+    "hours": "8:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "厦门自贸区店",
+    "city": "厦门",
+    "district": "湖里区",
+    "address": "福建省厦门市湖里区中国（福建）自由贸易试验区厦门片区虎屿北路9号1号区域",
+    "hours": "9:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "武汉汉口店",
+    "city": "武汉",
+    "district": "硚口区",
+    "address": "湖北省武汉市硚口区解放大道387号南国西汇城市广场二期",
+    "hours": "9:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "武汉光谷店",
+    "city": "武汉",
+    "district": "东湖高新区",
+    "address": "湖北省武汉市东湖高新区武汉市东湖新技术开发区高新大道456号S2号楼",
+    "hours": "9:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "汉阳店",
+    "city": "武汉",
+    "district": "汉阳区",
+    "address": "湖北省武汉市汉阳区连通港路88号",
+    "hours": "9:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "长沙雨花店",
+    "city": "长沙",
+    "district": "雨花区",
+    "address": "湖南省长沙市雨花区劳动东路268号",
+    "hours": "9:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "长沙岳麓店",
+    "city": "长沙",
+    "district": "岳麓区",
+    "address": "湖南省长沙市岳麓区银盆岭路228号保利西海岸E区",
+    "hours": "9:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "南京雨花台店",
+    "city": "南京",
+    "district": "雨花台区",
+    "address": "江苏省南京市雨花台区软件大道109号",
+    "hours": "9:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "南京江北店",
+    "city": "南京",
+    "district": "浦口区",
+    "address": "江苏省南京市浦口区顶山街道江北兴隆路21号",
+    "hours": "9:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "常州新北店",
+    "city": "常州",
+    "district": "新北区",
+    "address": "江苏省常州市新北区通江中路588号589号",
+    "hours": "9:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "苏州金鸡湖店",
+    "city": "苏州",
+    "district": "工业园区",
+    "address": "江苏省苏州市工业园区西华林街88号",
+    "hours": "8:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "苏州木渎店",
+    "city": "苏州",
+    "district": "吴中区",
+    "address": "江苏省苏州市吴中区长江路18号地上第一层部分、地上第二层部分、地上第三层部分、地上第四层部分",
+    "hours": "8:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "苏州昆山店",
+    "city": "苏州",
+    "district": "昆山市",
+    "address": "江苏省苏州市昆山市中华园路与珑庭路交界处",
+    "hours": "9:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "南通崇川店",
+    "city": "南通",
+    "district": "港闸区",
+    "address": "江苏省南通市港闸区深南路69号",
+    "hours": "9:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "南昌红谷滩店",
+    "city": "南昌",
+    "district": "红谷滩区",
+    "address": "江西省南昌市红谷滩区丰和南大道1955号",
+    "hours": "9:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "沈阳和平店",
+    "city": "沈阳",
+    "district": "和平区",
+    "address": "辽宁省沈阳市和平区长白南路279号",
+    "hours": "9:00-21:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "大连香炉礁店",
+    "city": "大连",
+    "district": "西岗区",
+    "address": "辽宁省大连市西岗区香炉礁街道海达北街42号",
+    "hours": "9:00-21:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "成都华侨城店",
+    "city": "成都",
+    "district": "金牛区",
+    "address": "四川省成都市金牛区北三环路一段223号",
+    "hours": "9:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "成都天府新区店",
+    "city": "成都",
+    "district": "双流区",
+    "address": "四川省成都市双流区麓山大道二段199号",
+    "hours": "9:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "天津梅江店",
+    "city": "天津",
+    "district": "西青区",
+    "address": "天津市西青区汇川路221号一层",
+    "hours": "8:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "杭州西溪店",
+    "city": "杭州",
+    "district": "余杭区",
+    "address": "浙江省杭州市余杭区五常大道1号P1-A001",
+    "hours": "9:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "杭州北店",
+    "city": "杭州",
+    "district": "上城区",
+    "address": "浙江省杭州市上城区大农港路1238号",
+    "hours": "9:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "杭州萧山店",
+    "city": "杭州",
+    "district": "萧山区",
+    "address": "浙江省杭州市萧山区盈丰街道飞虹路1408号1层50商铺",
+    "hours": "9:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "宁波江北店",
+    "city": "宁波",
+    "district": "江北区",
+    "address": "浙江省宁波市江北区清河路269号",
+    "hours": "9:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "宁波鄞州店",
+    "city": "宁波",
+    "district": "鄞州区",
+    "address": "浙江省宁波市鄞州区钟公庙街道欢乐海岸路17号",
+    "hours": "9:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "重庆两江新区店",
+    "city": "重庆",
+    "district": "渝北区",
+    "address": "重庆市渝北区礼慈路15号龙湖礼嘉天街B馆",
+    "hours": "9:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "重庆九龙坡店",
+    "city": "重庆",
+    "district": "九龙坡区",
+    "address": "重庆市九龙坡区翼龙路10号",
+    "hours": "9:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "惠州店",
+    "city": "惠州",
+    "district": "惠城区",
+    "address": "广东省惠州市惠城区河南岸街道办事处金山大道13号印力广场A栋L1-01/L2-01",
+    "hours": "9:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "无锡店",
+    "city": "无锡",
+    "district": "滨湖区",
+    "address": "江苏省无锡市滨湖区观山路与贡湖大道交叉口东北角无锡山姆经开店",
+    "hours": "9:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "山姆",
+    "name": "南宁店",
+    "city": "南宁",
+    "district": "青秀区",
+    "address": "广西壮族自治区南宁市青秀区高坡岭路12号",
+    "hours": "9:00-22:00",
+    "phone": "400-6336-868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "开市客",
+    "name": "上海闵行店",
+    "city": "上海",
+    "district": "闵行区",
+    "address": "上海市闵行区朱建路235号",
+    "hours": "09:00-21:00",
+    "phone": "(021) 3328-9989",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "开市客",
+    "name": "苏州高新区店",
+    "city": "苏州",
+    "district": "高新区",
+    "address": "江苏省苏州市高新区城际路9号",
+    "hours": "09:00-21:00",
+    "phone": "(0512) 6691-9888",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "开市客",
+    "name": "上海浦东店",
+    "city": "上海",
+    "district": "浦东新区",
+    "address": "上海市浦东新区康新公路5178号",
+    "hours": "09:00-21:00",
+    "phone": "(021) 5808-6868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "开市客",
+    "name": "宁波鄞州店",
+    "city": "宁波",
+    "district": "鄞州区",
+    "address": "浙江省宁波市鄞州区首南东路1998号",
+    "hours": "09:00-21:00",
+    "phone": "(0574)5615-9888",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "开市客",
+    "name": "杭州萧山店",
+    "city": "杭州",
+    "district": "萧山区",
+    "address": "浙江省杭州市萧山区宁围街道鸿达路63号",
+    "hours": "09:00-21:00",
+    "phone": "(0571)5617-9888",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "开市客",
+    "name": "深圳龙华店",
+    "city": "深圳",
+    "district": "龙华区",
+    "address": "广东省深圳市龙华区民达路68号",
+    "hours": "09:00-21:00",
+    "phone": "(0755)2798-6868",
+    "last_verified": "2026-08-15"
+  },
+  {
+    "brand": "开市客",
+    "name": "南京江宁店",
+    "city": "南京",
+    "district": "江宁区",
+    "address": "南京市江宁区吉印大道3788号",
+    "hours": "09:00-21:00",
+    "phone": "(025)8715-9888",
+    "last_verified": "2026-08-15"
+  }
+];
+
+
+// 品牌信息
+const BRANDS = [
+  { key: '山姆', class: 'sams' },
+  { key: '开市客', class: 'costco' },
+  { key: '奥乐齐', class: 'aldi' }
+];
+
+// 状态
+let activeBrands = new Set();
+let activeCities = new Set();
+let searchQuery = '';
+
+// 初始化
+const searchInput = document.getElementById('searchInput');
+const brandTagsEl = document.getElementById('brandTags');
+const cityTagsEl = document.getElementById('cityTags');
+const summaryEl = document.getElementById('summary');
+const resultsEl = document.getElementById('results');
+const clearBtn = document.getElementById('clearBtn');
+
+// 构建城市列表
+const cityList = [...new Set(STORES.map(s => s.city))].sort();
+
+// 渲染品牌标签
+BRANDS.forEach(b => {
+  const count = STORES.filter(s => s.brand === b.key).length;
+  const el = document.createElement('span');
+  el.className = 'tag';
+  el.dataset.brand = b.key;
+  el.innerHTML = `${b.key} <span class="count">${count}</span>`;
+  el.addEventListener('click', () => toggleBrand(b.key, el));
+  brandTagsEl.appendChild(el);
+});
+
+// 渲染城市标签
+cityList.forEach(c => {
+  const count = STORES.filter(s => s.city === c).length;
+  const el = document.createElement('span');
+  el.className = 'tag';
+  el.dataset.city = c;
+  el.innerHTML = `${c} <span class="count">${count}</span>`;
+  el.addEventListener('click', () => toggleCity(c, el));
+  cityTagsEl.appendChild(el);
+});
+
+// 搜索框
+searchInput.addEventListener('input', (e) => {
+  searchQuery = e.target.value.trim().toLowerCase();
+  render();
+});
+
+// 清除按钮
+clearBtn.addEventListener('click', () => {
+  activeBrands.clear();
+  activeCities.clear();
+  searchQuery = '';
+  searchInput.value = '';
+  document.querySelectorAll('.tag.active').forEach(el => el.classList.remove('active'));
+  render();
+});
+
+function toggleBrand(brand, el) {
+  if (activeBrands.has(brand)) {
+    activeBrands.delete(brand);
+    el.classList.remove('active');
+  } else {
+    activeBrands.add(brand);
+    el.classList.add('active');
+  }
+  render();
+}
+
+function toggleCity(city, el) {
+  if (activeCities.has(city)) {
+    activeCities.delete(city);
+    el.classList.remove('active');
+  } else {
+    activeCities.add(city);
+    el.classList.add('active');
+  }
+  render();
+}
+
+function getFilteredStores() {
+  return STORES.filter(s => {
+    // 品牌筛选
+    if (activeBrands.size > 0 && !activeBrands.has(s.brand)) return false;
+    // 城市筛选
+    if (activeCities.size > 0 && !activeCities.has(s.city)) return false;
+    // 搜索
+    if (searchQuery) {
+      const q = searchQuery;
+      const text = `${s.brand} ${s.name} ${s.city} ${s.district} ${s.address}`.toLowerCase();
+      if (!text.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function render() {
+  const filtered = getFilteredStores();
+  
+  // 显示/隐藏清除按钮
+  clearBtn.style.display = (activeBrands.size > 0 || activeCities.size > 0 || searchQuery) ? 'inline' : 'none';
+  
+  // 摘要
+  if (filtered.length === 0) {
+    summaryEl.innerHTML = '';
+    resultsEl.innerHTML = '<div class="empty"><p>没有匹配的门店，试试调整筛选条件</p></div>';
+    return;
+  }
+  
+  const cities = [...new Set(filtered.map(s => s.city))];
+  const brands = [...new Set(filtered.map(s => s.brand))];
+  summaryEl.innerHTML = `共 <span>${filtered.length}</span> 家门店 · <span>${cities.length}</span> 个城市 · <span>${brands.length}</span> 个品牌`;
+  
+  // 按城市 → 区分组
+  const cityMap = {};
+  filtered.forEach(s => {
+    if (!cityMap[s.city]) cityMap[s.city] = {};
+    if (!cityMap[s.city][s.district]) cityMap[s.city][s.district] = [];
+    cityMap[s.city][s.district].push(s);
+  });
+  
+  let html = '';
+  Object.keys(cityMap).sort().forEach(city => {
+    const cityCount = Object.values(cityMap[city]).reduce((sum, arr) => sum + arr.length, 0);
+    html += `<div class="city-group"><h3>${city} <span class="store-count">${cityCount} 家</span></h3>`;
+    
+    Object.keys(cityMap[city]).sort().forEach(district => {
+      const stores = cityMap[city][district];
+      html += `<div class="district-group"><h4>${district}</h4>`;
+      stores.forEach(s => {
+        const brandClass = BRANDS.find(b => b.key === s.brand)?.class || '';
+        const hoursHtml = s.hours ? `<div class="store-hours">营业时间：${s.hours}</div>` : '';
+        html += `<div class="store-card">
+          <span class="brand-badge ${brandClass}">${s.brand}</span>
+          <div class="store-info">
+            <div class="store-name">${s.name}</div>
+            <div class="store-address">${s.address}</div>
+            ${hoursHtml}
+          </div>
+        </div>`;
+      });
+      html += `</div>`;
+    });
+    
+    html += `</div>`;
+  });
+  
+  resultsEl.innerHTML = html;
+}
+
+// 初始渲染
+render();
+</script>
+</body>
+</html>
